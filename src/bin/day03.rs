@@ -1,4 +1,3 @@
-use once_cell::sync::Lazy;
 use regex::Regex;
 
 #[derive(Debug)]
@@ -16,22 +15,20 @@ fn main() {
 }
 
 fn part_1(input: &str) -> usize {
-    static RE: Lazy<Regex> = Lazy::new(|| {
-        Regex::new(
-            r"(?x)
-            (mul\()
-            (?<left>\d+)
-            (\,)
-            (?<right>\d+)
-            (\))",
-        )
-        .unwrap()
-    });
+    let re = Regex::new(
+        r"(?x)
+        (mul\()
+        (?<left>\d+)
+        (\,)
+        (?<right>\d+)
+        (\))",
+    )
+    .unwrap();
 
     let mut total: usize = 0;
 
     for line in input.lines() {
-        let instructions: Vec<Mul> = RE.captures_iter(line).map(|mul| {
+        let instructions: Vec<Mul> = re.captures_iter(line).map(|mul| {
             let left = mul.name("left").unwrap().as_str().parse::<usize>().unwrap();
             let right = mul.name("right").unwrap().as_str().parse::<usize>().unwrap();
             Mul{
