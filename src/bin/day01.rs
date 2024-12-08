@@ -4,7 +4,8 @@ fn main() {
     let input: &str = include_str!("./day01.txt");
     let pt1 = part_1(input);
     let pt2 = part_2(input);
-    println!("Part 1: {pt1} \nPart 2: {pt2}");
+    println!("Part 1: {pt1}");
+    println!("Part 2: {pt2}");
 }
 
 fn part_1(input: &str) -> i32 {
@@ -19,8 +20,7 @@ fn part_1(input: &str) -> i32 {
     left.sort();
     right.sort();
 
-    let sorted_zip: Vec<(i32, i32)> = zip(left.into_iter(), right.into_iter()).collect();
-    sorted_zip
+    zip(left.into_iter(), right.into_iter())
         .into_iter()
         .map(|(left, right): (i32, i32)| (left - right).abs())
         .reduce(|sum, num| sum + num).unwrap()
