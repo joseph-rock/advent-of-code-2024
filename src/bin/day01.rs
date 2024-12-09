@@ -23,7 +23,7 @@ fn part_1(input: &str) -> i32 {
     zip(left.into_iter(), right.into_iter())
         .into_iter()
         .map(|(left, right): (i32, i32)| (left - right).abs())
-        .reduce(|sum, num| sum + num).unwrap()
+        .sum::<i32>()
 }
 
 fn part_2(input: &str) -> usize {
