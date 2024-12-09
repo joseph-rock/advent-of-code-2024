@@ -1,3 +1,7 @@
+enum ReportResult {
+    Safe,
+    Unsafe(usize),
+}
 
 fn main() {
     let input: &str = include_str!("./day02.txt");
@@ -70,11 +74,6 @@ fn part_2(input: &str) -> usize {
     }
     
     total_safe
-}
-
-enum ReportResult {
-    Safe,
-    Unsafe(usize),
 }
 
 fn safe(report: &Vec<i8>) -> ReportResult {
