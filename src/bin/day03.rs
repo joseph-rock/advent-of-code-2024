@@ -1,13 +1,4 @@
-use regex::{
-    Regex, 
-    RegexSet,
-};
-
-#[derive(Debug)]
-struct Mul {
-    left: usize,
-    right: usize,
-}
+use regex::Regex;
 
 #[derive(Debug)]
 struct Instruction {
@@ -38,10 +29,12 @@ fn part_1(input: &str) -> usize {
     let mut total: usize = 0;
 
     for line in input.lines() {
-        let instructions: Vec<Mul> = re.captures_iter(line).map(|mul| {
-            let left = mul.name("left").unwrap().as_str().parse::<usize>().unwrap();
-            let right = mul.name("right").unwrap().as_str().parse::<usize>().unwrap();
-            Mul{
+        let instructions: Vec<Instruction> = re.captures_iter(line).map(|inst| {
+            let name = String::new();
+            let left = inst.name("left").unwrap().as_str().parse::<usize>().unwrap();
+            let right = inst.name("right").unwrap().as_str().parse::<usize>().unwrap();
+            Instruction{
+                name,
                 left,
                 right,
             }
