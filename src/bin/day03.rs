@@ -57,7 +57,6 @@ fn part_2(input: &str) -> usize {
     )
     .unwrap();
 
-    let mut total: usize = 0;
     let mut instruction_list: Vec<Instruction> = Vec::new();
     for line in input.lines() {
         let instructions: Vec<Instruction> = re.captures_iter(line).map(|inst| {
@@ -73,6 +72,7 @@ fn part_2(input: &str) -> usize {
         instruction_list.extend(instructions);
     }
 
+    let mut total: usize = 0;
     let mut flag = true;
     for inst in instruction_list {
         if inst.name.ends_with("do") {
