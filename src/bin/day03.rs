@@ -29,10 +29,9 @@ fn part_1(input: &str) -> usize {
     let mut total: usize = 0;
 
     for line in input.lines() {
-        let instructions: Vec<Instruction> = re
+        let instructions: usize = re
             .captures_iter(line)
             .map(|inst| {
-                let name = String::new();
                 let left = inst
                     .name("left")
                     .unwrap()
@@ -45,13 +44,11 @@ fn part_1(input: &str) -> usize {
                     .as_str()
                     .parse::<usize>()
                     .unwrap();
-                Instruction { name, left, right }
+                left * right
             })
-            .collect();
+            .sum::<usize>();
 
-        total += instructions
-            .into_iter()
-            .fold(0, |total, inst| total + (inst.left * inst.right));
+        total += instructions;
     }
 
     total
