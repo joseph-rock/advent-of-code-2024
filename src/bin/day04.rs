@@ -65,8 +65,8 @@ impl Wordsearch {
             Some(word) => match_word(&word),
             None => (),
         }
-        let south_east = self.slice_southeast(x, y, search_word.len());
-        match south_east {
+        let southeast = self.slice_southeast(x, y, search_word.len());
+        match southeast {
             Some(word) => match_word(&word),
             None => (),
         }
@@ -75,13 +75,33 @@ impl Wordsearch {
             Some(word) => match_word(&word),
             None => (),
         }
-        let south_west = self.slice_southwest(x, y, search_word.len());
-        match south_west {
+        let southwest = self.slice_southwest(x, y, search_word.len());
+        match southwest {
             Some(word) => match_word(&word),
             None => (),
         }
 
         matches
+    }
+
+    fn match_x_word(&self, x: usize, y: usize, search_word: &str) -> bool {
+        let rev_search_word: String = search_word.chars().rev().collect();
+        let mut matches_southeast = false;
+        let mut matches_southwest = false;
+        let mut match_word = |word: &str| word == search_word || word == rev_search_word;
+
+
+        let southeast = self.slice_southeast(x, y, search_word.len());
+        match southeast {
+            Some(word) => matches_southeast = match_word(&word),
+            None => (),
+        }
+        let southwest = self.slice_southwest(x + 2, y, search_word.len());
+        match southwest {
+            Some(word) => matches_southwest = match_word(&word),
+            None => (),
+        }
+        matches_southeast && matches_southwest
     }
 
     fn x_max(&self) -> usize {
@@ -96,9 +116,9 @@ impl Wordsearch {
 fn main() {
     let input: &str = include_str!("./day04.txt");
     let pt1 = part_1(input);
-    //let pt2 = part_2(input);
+    let pt2 = part_2(input);
     println!("Part 1: {pt1}");
-    //println!("Part 2: {pt2}");
+    println!("Part 2: {pt2}");
 }
 
 fn part_1(input: &str) -> usize {
@@ -108,6 +128,21 @@ fn part_1(input: &str) -> usize {
     for yi in 0..matrix.y_max() {
         for xi in 0..matrix.x_max() {
             total += matrix.search_word(xi, yi, search_word);
+        }
+    }
+    total
+}
+
+fn part_2(input: &str) -> usize {
+    let matrix = Wordsearch::new(input);
+    let search_word = "MAS";
+    let mut total = 0;
+    for yi in 0..matrix.y_max() {
+        for xi in 0..matrix.x_max() {
+            let matches_x_mas = matrix.match_x_word(xi, yi, search_word);
+            if matches_x_mas {
+                total += 1;
+            }
         }
     }
     total
