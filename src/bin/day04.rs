@@ -2,21 +2,21 @@ struct Wordsearch {
     matrix: Vec<Vec<char>>,
 }
 
-fn parse(input: &str) -> Wordsearch {
-    let mut matrix: Vec<Vec<char>> = Vec::new();
-    
-    for line in input.lines() {
-        let chars: Vec<char> = line.chars().collect();
-        matrix.push(chars);
+impl Wordsearch {
+    fn new(input: &str) -> Wordsearch {
+        let mut matrix: Vec<Vec<char>> = Vec::new();
+
+        for line in input.lines() {
+            let chars: Vec<char> = line.chars().collect();
+            matrix.push(chars);
+        }
+
+        Wordsearch { matrix }
     }
 
-    Wordsearch { matrix }
-}
-
-impl Wordsearch {
     fn slice(&self, x: usize, y: usize, x_dir: i32, y_dir: i32, len: usize) -> Option<String> {
         let mut slice = String::new();
-        
+
         for offset in 0..len {
             let next_y = y as i32 + (offset as i32 * y_dir);
             let row = self.matrix.get(next_y as usize);
@@ -28,7 +28,7 @@ impl Wordsearch {
                         Some(c) => slice.push(*c),
                         None => return None,
                     }
-                },
+                }
                 None => return None,
             }
         }
@@ -102,7 +102,7 @@ fn main() {
 }
 
 fn part_1(input: &str) -> usize {
-    let matrix = parse(input);
+    let matrix = Wordsearch::new(input);
     let search_word = "XMAS";
     let mut total = 0;
     for yi in 0..matrix.y_max() {
@@ -110,5 +110,5 @@ fn part_1(input: &str) -> usize {
             total += matrix.search_word(xi, yi, search_word);
         }
     }
-   total 
+    total
 }
