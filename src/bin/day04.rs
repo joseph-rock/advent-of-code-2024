@@ -90,7 +90,6 @@ impl Wordsearch {
         let mut matches_southwest = false;
         let mut match_word = |word: &str| word == search_word || word == rev_search_word;
 
-
         let southeast = self.slice_southeast(x, y, search_word.len());
         match southeast {
             Some(word) => matches_southeast = match_word(&word),

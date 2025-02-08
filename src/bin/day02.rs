@@ -72,7 +72,7 @@ fn part_2(input: &str) -> usize {
             }
         }
     }
-    
+
     total_safe
 }
 
@@ -88,7 +88,7 @@ fn safe(report: &Vec<i8>) -> ReportResult {
         if prev.is_some() && prev.unwrap() * difference <= 0 {
             return ReportResult::Unsafe(index);
         }
-        
+
         prev = Some(difference);
     }
     ReportResult::Safe
