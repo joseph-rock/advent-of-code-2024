@@ -88,23 +88,32 @@ impl Wordsearch {
         matches
     }
 
-    fn match_x_word(&self, x: usize, y: usize, search_word: &str) -> bool {
+    fn x_word_occurrences(&self, search_word: &str) -> usize {
         let rev_search_word: String = search_word.chars().rev().collect();
-        let mut matches_southeast = false;
-        let mut matches_southwest = false;
-        let match_word = |word: &str| word == search_word || word == rev_search_word;
+        let mut matches = 0;
 
-        let southeast = self.slice_southeast(x, y, search_word.len());
-        match southeast {
-            Some(word) => matches_southeast = match_word(&word),
-            None => (),
+        for y in 0..self.y_max() {
+            for x in 0..self.x_max() {
+                let mut matches_southeast = false;
+                let mut matches_southwest = false;
+                let match_word = |word: &str| word == search_word || word == rev_search_word;
+
+                let southeast = self.slice_southeast(x, y, search_word.len());
+                match southeast {
+                    Some(word) => matches_southeast = match_word(&word),
+                    None => (),
+                }
+                let southwest = self.slice_southwest(x + 2, y, search_word.len());
+                match southwest {
+                    Some(word) => matches_southwest = match_word(&word),
+                    None => (),
+                }
+                if matches_southeast && matches_southwest {
+                    matches += 1;
+                }
+            }
         }
-        let southwest = self.slice_southwest(x + 2, y, search_word.len());
-        match southwest {
-            Some(word) => matches_southwest = match_word(&word),
-            None => (),
-        }
-        matches_southeast && matches_southwest
+        matches
     }
 
     fn x_max(&self) -> usize {
@@ -133,14 +142,5 @@ fn part_1(input: &str) -> usize {
 fn part_2(input: &str) -> usize {
     let matrix = Wordsearch::new(input);
     let search_word = "MAS";
-    let mut total = 0;
-    for y in 0..matrix.y_max() {
-        for x in 0..matrix.x_max() {
-            let matches_x_mas = matrix.match_x_word(x, y, search_word);
-            if matches_x_mas {
-                total += 1;
-            }
-        }
-    }
-    total
+    matrix.x_word_occurrences(search_word)
 }
