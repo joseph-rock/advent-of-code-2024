@@ -51,36 +51,40 @@ impl Wordsearch {
         self.slice(x, y, -1, 1, len)
     }
 
-    fn search_word(&self, x: usize, y: usize, search_word: &str) -> usize {
+    fn word_occurrences(&self, search_word: &str) -> usize {
         let rev_search_word: String = search_word.chars().rev().collect();
         let mut matches = 0;
-        let mut match_word = |word: &str| {
-            if word == search_word || word == rev_search_word {
-                matches += 1;
+
+        for y in 0..self.y_max() {
+            for x in 0..self.x_max() {
+                let mut match_word = |word: &str| {
+                    if word == search_word || word == rev_search_word {
+                        matches += 1;
+                    }
+                };
+
+                let east = self.slice_east(x, y, search_word.len());
+                match east {
+                    Some(word) => match_word(&word),
+                    None => (),
+                }
+                let southeast = self.slice_southeast(x, y, search_word.len());
+                match southeast {
+                    Some(word) => match_word(&word),
+                    None => (),
+                }
+                let south = self.slice_south(x, y, search_word.len());
+                match south {
+                    Some(word) => match_word(&word),
+                    None => (),
+                }
+                let southwest = self.slice_southwest(x, y, search_word.len());
+                match southwest {
+                    Some(word) => match_word(&word),
+                    None => (),
+                }
             }
-        };
-
-        let east = self.slice_east(x, y, search_word.len());
-        match east {
-            Some(word) => match_word(&word),
-            None => (),
         }
-        let southeast = self.slice_southeast(x, y, search_word.len());
-        match southeast {
-            Some(word) => match_word(&word),
-            None => (),
-        }
-        let south = self.slice_south(x, y, search_word.len());
-        match south {
-            Some(word) => match_word(&word),
-            None => (),
-        }
-        let southwest = self.slice_southwest(x, y, search_word.len());
-        match southwest {
-            Some(word) => match_word(&word),
-            None => (),
-        }
-
         matches
     }
 
@@ -123,22 +127,16 @@ fn main() {
 fn part_1(input: &str) -> usize {
     let matrix = Wordsearch::new(input);
     let search_word = "XMAS";
-    let mut total = 0;
-    for yi in 0..matrix.y_max() {
-        for xi in 0..matrix.x_max() {
-            total += matrix.search_word(xi, yi, search_word);
-        }
-    }
-    total
+    matrix.word_occurrences(search_word)
 }
 
 fn part_2(input: &str) -> usize {
     let matrix = Wordsearch::new(input);
     let search_word = "MAS";
     let mut total = 0;
-    for yi in 0..matrix.y_max() {
-        for xi in 0..matrix.x_max() {
-            let matches_x_mas = matrix.match_x_word(xi, yi, search_word);
+    for y in 0..matrix.y_max() {
+        for x in 0..matrix.x_max() {
+            let matches_x_mas = matrix.match_x_word(x, y, search_word);
             if matches_x_mas {
                 total += 1;
             }
