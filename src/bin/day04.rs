@@ -14,15 +14,15 @@ impl Wordsearch {
         Wordsearch { matrix }
     }
 
-    fn slice(&self, x: usize, y: usize, x_dir: i32, y_dir: i32, len: usize) -> Option<String> {
+    fn slice(&self, x: usize, y: usize, x_incr: i32, y_incr: i32, len: usize) -> Option<String> {
         let mut slice = String::new();
 
         for offset in 0..len {
-            let next_y = y as i32 + (offset as i32 * y_dir);
+            let next_y = y as i32 + (offset as i32 * y_incr);
             let row = self.matrix.get(next_y as usize);
             match row {
                 Some(row) => {
-                    let next_x = x as i32 + (offset as i32 * x_dir);
+                    let next_x = x as i32 + (offset as i32 * x_incr);
                     let c = row.get(next_x as usize);
                     match c {
                         Some(c) => slice.push(*c),
@@ -51,18 +51,17 @@ impl Wordsearch {
         self.slice(x, y, -1, 1, len)
     }
 
-    fn word_occurrences(&self, search_word: &str) -> usize {
+    fn word_total(&self, search_word: &str) -> usize {
         let rev_search_word: String = search_word.chars().rev().collect();
-        let mut matches = 0;
+        let mut total = 0;
+        let mut match_word = |word: &str| {
+            if word == search_word || word == rev_search_word {
+                total += 1;
+            }
+        };
 
         for y in 0..self.y_max() {
             for x in 0..self.x_max() {
-                let mut match_word = |word: &str| {
-                    if word == search_word || word == rev_search_word {
-                        matches += 1;
-                    }
-                };
-
                 let east = self.slice_east(x, y, search_word.len());
                 match east {
                     Some(word) => match_word(&word),
@@ -85,18 +84,18 @@ impl Wordsearch {
                 }
             }
         }
-        matches
+        total
     }
 
-    fn x_word_occurrences(&self, search_word: &str) -> usize {
+    fn x_word_total(&self, search_word: &str) -> usize {
         let rev_search_word: String = search_word.chars().rev().collect();
-        let mut matches = 0;
+        let mut total = 0;
+        let match_word = |word: &str| word == search_word || word == rev_search_word;
 
         for y in 0..self.y_max() {
             for x in 0..self.x_max() {
                 let mut matches_southeast = false;
                 let mut matches_southwest = false;
-                let match_word = |word: &str| word == search_word || word == rev_search_word;
 
                 let southeast = self.slice_southeast(x, y, search_word.len());
                 match southeast {
@@ -109,11 +108,11 @@ impl Wordsearch {
                     None => (),
                 }
                 if matches_southeast && matches_southwest {
-                    matches += 1;
+                    total += 1;
                 }
             }
         }
-        matches
+        total
     }
 
     fn x_max(&self) -> usize {
@@ -136,11 +135,11 @@ fn main() {
 fn part_1(input: &str) -> usize {
     let matrix = Wordsearch::new(input);
     let search_word = "XMAS";
-    matrix.word_occurrences(search_word)
+    matrix.word_total(search_word)
 }
 
 fn part_2(input: &str) -> usize {
     let matrix = Wordsearch::new(input);
     let search_word = "MAS";
-    matrix.x_word_occurrences(search_word)
+    matrix.x_word_total(search_word)
 }
