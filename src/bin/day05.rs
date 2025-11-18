@@ -34,7 +34,7 @@ fn parse_input(input: &str) -> PrintQueue {
     PrintQueue { rules, lists }
 }
 
-fn middle_number(list: Vec<usize>) -> Option<usize> {
+fn middle_number(list: &Vec<usize>) -> Option<usize> {
     if list.is_empty() {
         None
     } else {
@@ -64,7 +64,7 @@ fn part_1(input: &str) -> usize {
 
     for list in queue.lists {
         if ordered(&list, &queue.rules) {
-            total += middle_number(list).unwrap();
+            total += middle_number(&list).unwrap();
         }
     }
     total
