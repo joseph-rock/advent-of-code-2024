@@ -50,6 +50,7 @@ fn ordered(list: &Vec<usize>, rules: &HashMap<usize, Vec<usize>>) -> bool {
         if check_list.contains(&num) {
             return false;
         } else {
+            // TODO: make unwrap_or_default work - borrowing headache
             let num_rules = rules.get(&num).unwrap().clone();
             check_list.extend(num_rules.iter().cloned());
         }
