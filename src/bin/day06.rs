@@ -134,16 +134,11 @@ fn direction_char(direction: Direction) -> char {
     }
 }
 
+// Maybe too fancy? Nested for might be easier to read.
 fn total_marker(map: &Vec<Vec<char>>, marker: &char) -> usize {
-    let mut total = 0;
-    for line in map {
-        for c in line {
-            if c == marker {
-                total += 1;
-            }
-        }
-    }
-    total
+    map.iter().fold(0, |sum, row| {
+        sum + row.iter().filter(|&letter| letter == marker).count()
+    })
 }
 
 fn part_1(input: &str) -> usize {
@@ -154,7 +149,6 @@ fn part_1(input: &str) -> usize {
 
     let mut next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
 
-    // usize cannot go negative, fix in move_forward()
     while next.in_bounds {
         if m.puzzle_map[next.y][next.x] == '#' {
             next = Cursor::rotate_clockwise(&m.cursor);
