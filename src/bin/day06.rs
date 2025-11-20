@@ -16,8 +16,9 @@ impl Map {
 #[derive(Debug, Copy, Clone)]
 struct Cursor {
     symbol: char,
-    coordinate: Coordinate,
     direction: Direction,
+    x: usize,
+    y: usize,
 }
 
 impl Cursor {
@@ -27,51 +28,43 @@ impl Cursor {
                 if let Some(direction) = Direction::char_direction(character) {
                     return Some(Cursor {
                         symbol: *character,
-                        coordinate: Coordinate { x, y },
                         direction,
+                        x,
+                        y,
                     });
                 }
             }
         }
         None
     }
-    
+
     // Fix to handle possiblility of usize going negative
     fn move_forward(cursor: &Cursor) -> Cursor {
         let symbol = cursor.symbol;
-        let coordinate = cursor.coordinate;
         let direction = cursor.direction;
         match cursor.direction {
             Direction::North => Cursor {
                 symbol,
-                coordinate: Coordinate {
-                    x: coordinate.x,
-                    y: coordinate.y - 1,
-                },
+                x: cursor.x,
+                y: cursor.y - 1,
                 direction,
             },
             Direction::South => Cursor {
                 symbol,
-                coordinate: Coordinate {
-                    x: coordinate.x,
-                    y: coordinate.y + 1,
-                },
+                x: cursor.x,
+                y: cursor.y + 1,
                 direction,
             },
             Direction::East => Cursor {
                 symbol,
-                coordinate: Coordinate {
-                    x: coordinate.x + 1,
-                    y: coordinate.y,
-                },
+                x: cursor.x + 1,
+                y: cursor.y,
                 direction,
             },
             Direction::West => Cursor {
                 symbol,
-                coordinate: Coordinate {
-                    x: coordinate.x - 1,
-                    y: coordinate.y,
-                },
+                x: cursor.x - 1,
+                y: cursor.y,
                 direction,
             },
         }
@@ -80,36 +73,35 @@ impl Cursor {
     fn rotate_clockwise(cursor: &Cursor) -> Cursor {
         // Todo: update symbol when rotated
         let symbol = cursor.symbol;
-        let coordinate = cursor.coordinate;
+        let x = cursor.x;
+        let y = cursor.y;
         match cursor.direction {
             Direction::North => Cursor {
                 symbol,
-                coordinate,
                 direction: Direction::East,
+                x,
+                y,
             },
             Direction::South => Cursor {
                 symbol,
-                coordinate,
                 direction: Direction::West,
+                x,
+                y,
             },
             Direction::East => Cursor {
                 symbol,
-                coordinate,
                 direction: Direction::South,
+                x,
+                y,
             },
             Direction::West => Cursor {
                 symbol,
-                coordinate,
                 direction: Direction::North,
+                x,
+                y,
             },
         }
     }
-}
-
-#[derive(Debug, Copy, Clone)]
-struct Coordinate {
-    x: usize,
-    y: usize,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -153,21 +145,20 @@ fn part_1(input: &str) -> usize {
     let mut next = Cursor::move_forward(&m.cursor);
 
     // usize cannot go negative, fix in move_forward()
-    while next.coordinate.x < *x_max
-        && next.coordinate.y < *y_max
-        // && next.coordinate.y >= 0
-        // && next.coordinate.x >= 0
+    while next.x < *x_max && next.y < *y_max
+    // && next.coordinate.y >= 0
+    // && next.coordinate.x >= 0
     {
-        if m.puzzle_map[next.coordinate.y][next.coordinate.x] == '#' {
+        if m.puzzle_map[next.y][next.x] == '#' {
             next = Cursor::rotate_clockwise(&m.cursor);
             m.cursor = next;
         } else {
-            m.puzzle_map[m.cursor.coordinate.y][m.cursor.coordinate.x] = marker;
+            m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
             m.cursor = next;
         }
         next = Cursor::move_forward(&m.cursor);
     }
-    m.puzzle_map[m.cursor.coordinate.y][m.cursor.coordinate.x] = marker;
+    m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
     total_marker(&m.puzzle_map, &marker)
 }
 
