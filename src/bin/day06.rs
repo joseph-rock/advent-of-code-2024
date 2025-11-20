@@ -1,4 +1,6 @@
-#[derive(Debug)]
+use std::{thread, time::Duration};
+
+#[derive(Debug, Clone)]
 struct Map {
     puzzle_map: Vec<Vec<char>>,
     cursor: Cursor,
@@ -141,15 +143,109 @@ fn total_marker(map: &Vec<Vec<char>>, marker: &char) -> usize {
     })
 }
 
+struct DisplayConfig {
+    width: usize,
+    height: usize,
+    pause_len: Duration,
+}
+
+impl DisplayConfig {
+    fn new() -> DisplayConfig {
+        DisplayConfig {
+            width: 40,
+            height: 20,
+            pause_len: Duration::from_millis(20),
+        }
+    }
+}
+
+fn clear() -> () {
+    print!("\x1B[2J\x1B[1;1H");
+}
+
+fn pause(config: &DisplayConfig) -> () {
+    thread::sleep(config.pause_len);
+}
+
+fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) -> () {
+    // Add little cursor dude
+    let mut map_copy = map.clone();
+
+    let cursor_x = map_copy.cursor.x;
+    let cursor_y = map_copy.cursor.y;
+    let mut local_x_min = 0;
+    let mut local_x_max = 0;
+    let mut local_y_min = 0;
+    let mut local_y_max = 0;
+
+    // Calculate display size
+    // Width greater than row len
+    if config.width >= *x_max {
+        local_x_min = 0;
+        local_x_max = *x_max;
+    }
+    // Cursor too close to west border
+    else if cursor_x <= config.width / 2 {
+        local_x_min = 0;
+        local_x_max = config.width;
+    }
+    // Cursor too close to east border
+    else if cursor_x + (config.width / 2) >= *x_max {
+        local_x_min = *x_max - config.width;
+        local_x_max = *x_max;
+    }
+    // Cursor safely inside x boundaries
+    else {
+        local_x_min = cursor_x - (config.width / 2);
+        local_x_max = cursor_x + (config.width / 2);
+    }
+
+    // Height greater than col len
+    if config.height >= *y_max {
+        local_y_min = 0;
+        local_y_max = *y_max;
+    }
+    // Cursor too close to north border
+    else if cursor_y <= config.height / 2 {
+        local_y_min = 0;
+        local_y_max = config.height;
+    }
+    // Cursor too close to south border
+    else if cursor_y + (config.height / 2) >= *y_max {
+        local_y_min = *y_max - config.height;
+        local_y_max = *y_max;
+    }
+    // Cursor safely inside y boundaries
+    else {
+        local_y_min = cursor_y - (config.height / 2);
+        local_y_max = cursor_y + (config.height / 2);
+    }
+
+    map_copy.puzzle_map[cursor_y][cursor_x] = map.cursor.symbol;
+    for y in local_y_min..local_y_max {
+        for x in local_x_min..local_x_max {
+            print!("{}", map_copy.puzzle_map[y][x]);
+        }
+        println!("");
+    }
+}
+
+fn display(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) -> () {
+    clear();
+    draw_screen(map, x_max, y_max, config);
+    pause(config);
+}
+
 fn part_1(input: &str) -> usize {
     let mut m = Map::new(input);
     let x_max = &m.puzzle_map[0].len();
     let y_max = &m.puzzle_map.len();
     let marker = 'x';
+    let config = DisplayConfig::new();
 
     let mut next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
-
     while next.in_bounds {
+        display(&m, &x_max, &y_max, &config);
         if m.puzzle_map[next.y][next.x] == '#' {
             next = Cursor::rotate_clockwise(&m.cursor);
             m.cursor = next;
@@ -159,7 +255,9 @@ fn part_1(input: &str) -> usize {
         }
         next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
     }
+
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
+
     total_marker(&m.puzzle_map, &marker)
 }
 
