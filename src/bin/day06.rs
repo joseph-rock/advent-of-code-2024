@@ -19,18 +19,20 @@ struct Cursor {
     direction: Direction,
     x: usize,
     y: usize,
+    in_bounds: bool,
 }
 
 impl Cursor {
     fn find_start(puzzle_map: &Vec<Vec<char>>) -> Option<Cursor> {
         for (y, row) in puzzle_map.iter().enumerate() {
             for (x, character) in row.iter().enumerate() {
-                if let Some(direction) = Direction::char_direction(character) {
+                if let Some(direction) = char_direction(character) {
                     return Some(Cursor {
                         symbol: *character,
                         direction,
                         x,
                         y,
+                        in_bounds: true,
                     });
                 }
             }
@@ -38,67 +40,68 @@ impl Cursor {
         None
     }
 
-    // Fix to handle possiblility of usize going negative
-    fn move_forward(cursor: &Cursor) -> Cursor {
-        let symbol = cursor.symbol;
-        let direction = cursor.direction;
+    fn move_forward(cursor: &Cursor, x_max: &usize, y_max: &usize) -> Cursor {
         match cursor.direction {
             Direction::North => Cursor {
-                symbol,
+                symbol: cursor.symbol,
                 x: cursor.x,
-                y: cursor.y - 1,
-                direction,
+                y: cursor.y.saturating_sub(1),
+                direction: cursor.direction,
+                in_bounds: cursor.y > 0,
             },
             Direction::South => Cursor {
-                symbol,
+                symbol: cursor.symbol,
                 x: cursor.x,
                 y: cursor.y + 1,
-                direction,
+                direction: cursor.direction,
+                in_bounds: cursor.y < *y_max - 1,
             },
             Direction::East => Cursor {
-                symbol,
+                symbol: cursor.symbol,
                 x: cursor.x + 1,
                 y: cursor.y,
-                direction,
+                direction: cursor.direction,
+                in_bounds: cursor.x < *x_max - 1,
             },
             Direction::West => Cursor {
-                symbol,
-                x: cursor.x - 1,
+                symbol: cursor.symbol,
+                x: cursor.x.saturating_sub(1),
                 y: cursor.y,
-                direction,
+                direction: cursor.direction,
+                in_bounds: cursor.x > 0,
             },
         }
     }
 
     fn rotate_clockwise(cursor: &Cursor) -> Cursor {
-        // Todo: update symbol when rotated
-        let symbol = cursor.symbol;
-        let x = cursor.x;
-        let y = cursor.y;
         match cursor.direction {
             Direction::North => Cursor {
-                symbol,
+                symbol: direction_char(Direction::East),
                 direction: Direction::East,
-                x,
-                y,
+                x: cursor.x,
+                y: cursor.y,
+                in_bounds: cursor.in_bounds,
             },
             Direction::South => Cursor {
-                symbol,
+                symbol: direction_char(Direction::West),
                 direction: Direction::West,
-                x,
-                y,
+                x: cursor.x,
+                y: cursor.y,
+                in_bounds: cursor.in_bounds,
             },
             Direction::East => Cursor {
-                symbol,
+                symbol: direction_char(Direction::South),
                 direction: Direction::South,
-                x,
-                y,
+                x: cursor.x,
+                y: cursor.y,
+                in_bounds: cursor.in_bounds,
             },
             Direction::West => Cursor {
-                symbol,
+                symbol: direction_char(Direction::North),
                 direction: Direction::North,
-                x,
-                y,
+                x: cursor.x,
+                y: cursor.y,
+                in_bounds: cursor.in_bounds,
             },
         }
     }
@@ -112,15 +115,22 @@ enum Direction {
     West,
 }
 
-impl Direction {
-    fn char_direction(c: &char) -> Option<Direction> {
-        match c {
-            '<' => Some(Direction::West),
-            'v' => Some(Direction::South),
-            '^' => Some(Direction::North),
-            '>' => Some(Direction::East),
-            _ => None,
-        }
+fn char_direction(c: &char) -> Option<Direction> {
+    match c {
+        '^' => Some(Direction::North),
+        'v' => Some(Direction::South),
+        '>' => Some(Direction::East),
+        '<' => Some(Direction::West),
+        _ => None,
+    }
+}
+
+fn direction_char(direction: Direction) -> char {
+    match direction {
+        Direction::North => '^',
+        Direction::South => 'v',
+        Direction::East => '>',
+        Direction::West => '<',
     }
 }
 
@@ -142,13 +152,10 @@ fn part_1(input: &str) -> usize {
     let y_max = &m.puzzle_map.len();
     let marker = 'x';
 
-    let mut next = Cursor::move_forward(&m.cursor);
+    let mut next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
 
     // usize cannot go negative, fix in move_forward()
-    while next.x < *x_max && next.y < *y_max
-    // && next.coordinate.y >= 0
-    // && next.coordinate.x >= 0
-    {
+    while next.in_bounds {
         if m.puzzle_map[next.y][next.x] == '#' {
             next = Cursor::rotate_clockwise(&m.cursor);
             m.cursor = next;
@@ -156,7 +163,7 @@ fn part_1(input: &str) -> usize {
             m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
             m.cursor = next;
         }
-        next = Cursor::move_forward(&m.cursor);
+        next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
     }
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
     total_marker(&m.puzzle_map, &marker)
