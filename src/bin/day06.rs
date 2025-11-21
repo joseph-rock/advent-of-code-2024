@@ -152,8 +152,8 @@ struct DisplayConfig {
 impl DisplayConfig {
     fn new() -> DisplayConfig {
         DisplayConfig {
-            width: 40,
-            height: 20,
+            width: 100,
+            height: 50,
             pause_len: Duration::from_millis(20),
         }
     }
@@ -168,7 +168,6 @@ fn pause(config: &DisplayConfig) -> () {
 }
 
 fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) -> () {
-    // Add little cursor dude
     let mut map_copy = map.clone();
 
     let cursor_x = map_copy.cursor.x;
@@ -222,11 +221,11 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) 
     }
 
     map_copy.puzzle_map[cursor_y][cursor_x] = map.cursor.symbol;
-    for y in local_y_min..local_y_max {
-        for x in local_x_min..local_x_max {
-            print!("{}", map_copy.puzzle_map[y][x]);
-        }
-        println!("");
+    for row_vec in local_y_min..local_y_max {
+        let row: String = map_copy.puzzle_map[row_vec][local_x_min..local_x_max]
+            .iter()
+            .collect();
+        println!("{}", row);
     }
 }
 
@@ -255,8 +254,8 @@ fn part_1(input: &str) -> usize {
         }
         next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
     }
-
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
+    display(&m, &x_max, &y_max, &config);
 
     total_marker(&m.puzzle_map, &marker)
 }
