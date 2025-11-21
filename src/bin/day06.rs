@@ -4,14 +4,48 @@ use std::{thread, time::Duration};
 struct Map {
     puzzle_map: Vec<Vec<char>>,
     cursor: Cursor,
+    x_max: usize,
+    y_max: usize,
 }
 
 impl Map {
     fn new(input: &str) -> Map {
         let puzzle_map: Vec<Vec<char>> = input.lines().map(|row| row.chars().collect()).collect();
         let cursor: Cursor = Cursor::find_start(&puzzle_map).unwrap();
+        let x_max = puzzle_map[0].len();
+        let y_max = puzzle_map.len();
 
-        Map { puzzle_map, cursor }
+        Map {
+            puzzle_map,
+            cursor,
+            x_max,
+            y_max,
+        }
+    }
+
+    fn peek_next(&self) -> Option<char> {
+        match self.cursor.direction {
+            Direction::North => self
+                .puzzle_map
+                .get(self.cursor.y - 1)?
+                .get(self.cursor.x)
+                .copied(),
+            Direction::South => self
+                .puzzle_map
+                .get(self.cursor.y + 1)?
+                .get(self.cursor.x)
+                .copied(),
+            Direction::East => self
+                .puzzle_map
+                .get(self.cursor.y)?
+                .get(self.cursor.x + 1)
+                .copied(),
+            Direction::West => self
+                .puzzle_map
+                .get(self.cursor.y)?
+                .get(self.cursor.x - 1)
+                .copied(),
+        }
     }
 }
 
@@ -21,7 +55,6 @@ struct Cursor {
     direction: Direction,
     x: usize,
     y: usize,
-    in_bounds: bool,
 }
 
 impl Cursor {
@@ -34,7 +67,6 @@ impl Cursor {
                         direction,
                         x,
                         y,
-                        in_bounds: true,
                     });
                 }
             }
@@ -42,69 +74,33 @@ impl Cursor {
         None
     }
 
-    fn move_forward(cursor: &Cursor, x_max: &usize, y_max: &usize) -> Cursor {
-        match cursor.direction {
-            Direction::North => Cursor {
-                icon: cursor.icon,
-                x: cursor.x,
-                y: cursor.y.saturating_sub(1),
-                direction: cursor.direction,
-                in_bounds: cursor.y > 0,
-            },
-            Direction::South => Cursor {
-                icon: cursor.icon,
-                x: cursor.x,
-                y: cursor.y + 1,
-                direction: cursor.direction,
-                in_bounds: cursor.y < *y_max - 1,
-            },
-            Direction::East => Cursor {
-                icon: cursor.icon,
-                x: cursor.x + 1,
-                y: cursor.y,
-                direction: cursor.direction,
-                in_bounds: cursor.x < *x_max - 1,
-            },
-            Direction::West => Cursor {
-                icon: cursor.icon,
-                x: cursor.x.saturating_sub(1),
-                y: cursor.y,
-                direction: cursor.direction,
-                in_bounds: cursor.x > 0,
-            },
+    fn move_forward(&mut self, x_max: &usize, y_max: &usize) -> () {
+        match self.direction {
+            Direction::North => self.y = self.y.saturating_sub(1),
+            Direction::South => self.y += 1,
+            Direction::East => self.x += 1,
+            Direction::West => self.x = self.x.saturating_sub(1),
         }
     }
 
-    fn rotate_clockwise(cursor: &Cursor) -> Cursor {
-        match cursor.direction {
-            Direction::North => Cursor {
-                icon: direction_char(Direction::East),
-                direction: Direction::East,
-                x: cursor.x,
-                y: cursor.y,
-                in_bounds: cursor.in_bounds,
-            },
-            Direction::South => Cursor {
-                icon: direction_char(Direction::West),
-                direction: Direction::West,
-                x: cursor.x,
-                y: cursor.y,
-                in_bounds: cursor.in_bounds,
-            },
-            Direction::East => Cursor {
-                icon: direction_char(Direction::South),
-                direction: Direction::South,
-                x: cursor.x,
-                y: cursor.y,
-                in_bounds: cursor.in_bounds,
-            },
-            Direction::West => Cursor {
-                icon: direction_char(Direction::North),
-                direction: Direction::North,
-                x: cursor.x,
-                y: cursor.y,
-                in_bounds: cursor.in_bounds,
-            },
+    fn rotate_clockwise(&mut self) -> () {
+        match self.direction {
+            Direction::North => {
+                self.icon = direction_char(Direction::East);
+                self.direction = Direction::East;
+            }
+            Direction::South => {
+                self.icon = direction_char(Direction::West);
+                self.direction = Direction::West;
+            }
+            Direction::East => {
+                self.icon = direction_char(Direction::South);
+                self.direction = Direction::South;
+            }
+            Direction::West => {
+                self.icon = direction_char(Direction::North);
+                self.direction = Direction::North;
+            }
         }
     }
 }
@@ -143,7 +139,7 @@ fn total_marker(map: &Vec<Vec<char>>, marker: &char) -> usize {
     })
 }
 
-fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
+fn draw_screen(map: &Map) -> () {
     struct DisplayConfig {
         width: usize,
         height: usize,
@@ -169,9 +165,9 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
     let mut local_y_max = 0;
 
     // Width greater than row len
-    if config.width >= *x_max {
+    if config.width >= map_copy.x_max {
         local_x_min = 0;
-        local_x_max = *x_max;
+        local_x_max = map_copy.x_max;
     }
     // Cursor too close to west border
     else if cursor_x <= config.width / 2 {
@@ -179,9 +175,9 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
         local_x_max = config.width;
     }
     // Cursor too close to east border
-    else if cursor_x + (config.width / 2) >= *x_max {
-        local_x_min = *x_max - config.width;
-        local_x_max = *x_max;
+    else if cursor_x + (config.width / 2) >= map_copy.x_max {
+        local_x_min = map_copy.x_max - config.width;
+        local_x_max = map_copy.x_max;
     }
     // Cursor safely inside width boundaries
     else {
@@ -190,9 +186,9 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
     }
 
     // Height greater than col len
-    if config.height >= *y_max {
+    if config.height >= map_copy.y_max {
         local_y_min = 0;
-        local_y_max = *y_max;
+        local_y_max = map_copy.y_max;
     }
     // Cursor too close to north border
     else if cursor_y <= config.height / 2 {
@@ -200,9 +196,9 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
         local_y_max = config.height;
     }
     // Cursor too close to south border
-    else if cursor_y + (config.height / 2) >= *y_max {
-        local_y_min = *y_max - config.height;
-        local_y_max = *y_max;
+    else if cursor_y + (config.height / 2) >= map_copy.y_max {
+        local_y_min = map_copy.y_max - config.height;
+        local_y_max = map_copy.y_max;
     }
     // Cursor safely inside height boundaries
     else {
@@ -228,24 +224,19 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
 
 fn part_1(input: &str) -> usize {
     let mut m = Map::new(input);
-    let x_max = &m.puzzle_map[0].len();
-    let y_max = &m.puzzle_map.len();
     let marker = 'x';
 
-    let mut next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
-    while next.in_bounds {
-        draw_screen(&m, &x_max, &y_max);
-        if m.puzzle_map[next.y][next.x] == '#' {
-            next = Cursor::rotate_clockwise(&m.cursor);
-            m.cursor = next;
-        } else {
-            m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
-            m.cursor = next;
+    while let Some(character) = m.peek_next() {
+        draw_screen(&m);
+        if character == '#' {
+            m.cursor.rotate_clockwise();
         }
-        next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
+        m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
+        m.cursor.move_forward(&m.x_max, &m.y_max);
     }
+    // Fix off by 1 error
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
-    draw_screen(&m, &x_max, &y_max);
+    draw_screen(&m);
 
     total_marker(&m.puzzle_map, &marker)
 }
