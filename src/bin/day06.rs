@@ -17,7 +17,7 @@ impl Map {
 
 #[derive(Debug, Copy, Clone)]
 struct Cursor {
-    symbol: char,
+    icon: char,
     direction: Direction,
     x: usize,
     y: usize,
@@ -30,7 +30,7 @@ impl Cursor {
             for (x, character) in row.iter().enumerate() {
                 if let Some(direction) = char_direction(character) {
                     return Some(Cursor {
-                        symbol: *character,
+                        icon: *character,
                         direction,
                         x,
                         y,
@@ -45,28 +45,28 @@ impl Cursor {
     fn move_forward(cursor: &Cursor, x_max: &usize, y_max: &usize) -> Cursor {
         match cursor.direction {
             Direction::North => Cursor {
-                symbol: cursor.symbol,
+                icon: cursor.icon,
                 x: cursor.x,
                 y: cursor.y.saturating_sub(1),
                 direction: cursor.direction,
                 in_bounds: cursor.y > 0,
             },
             Direction::South => Cursor {
-                symbol: cursor.symbol,
+                icon: cursor.icon,
                 x: cursor.x,
                 y: cursor.y + 1,
                 direction: cursor.direction,
                 in_bounds: cursor.y < *y_max - 1,
             },
             Direction::East => Cursor {
-                symbol: cursor.symbol,
+                icon: cursor.icon,
                 x: cursor.x + 1,
                 y: cursor.y,
                 direction: cursor.direction,
                 in_bounds: cursor.x < *x_max - 1,
             },
             Direction::West => Cursor {
-                symbol: cursor.symbol,
+                icon: cursor.icon,
                 x: cursor.x.saturating_sub(1),
                 y: cursor.y,
                 direction: cursor.direction,
@@ -78,28 +78,28 @@ impl Cursor {
     fn rotate_clockwise(cursor: &Cursor) -> Cursor {
         match cursor.direction {
             Direction::North => Cursor {
-                symbol: direction_char(Direction::East),
+                icon: direction_char(Direction::East),
                 direction: Direction::East,
                 x: cursor.x,
                 y: cursor.y,
                 in_bounds: cursor.in_bounds,
             },
             Direction::South => Cursor {
-                symbol: direction_char(Direction::West),
+                icon: direction_char(Direction::West),
                 direction: Direction::West,
                 x: cursor.x,
                 y: cursor.y,
                 in_bounds: cursor.in_bounds,
             },
             Direction::East => Cursor {
-                symbol: direction_char(Direction::South),
+                icon: direction_char(Direction::South),
                 direction: Direction::South,
                 x: cursor.x,
                 y: cursor.y,
                 in_bounds: cursor.in_bounds,
             },
             Direction::West => Cursor {
-                symbol: direction_char(Direction::North),
+                icon: direction_char(Direction::North),
                 direction: Direction::North,
                 x: cursor.x,
                 y: cursor.y,
@@ -143,41 +143,31 @@ fn total_marker(map: &Vec<Vec<char>>, marker: &char) -> usize {
     })
 }
 
-struct DisplayConfig {
-    width: usize,
-    height: usize,
-    pause_len: Duration,
-}
-
-impl DisplayConfig {
-    fn new() -> DisplayConfig {
-        DisplayConfig {
-            width: 100,
-            height: 50,
-            pause_len: Duration::from_millis(20),
-        }
+fn draw_screen(map: &Map, x_max: &usize, y_max: &usize) -> () {
+    struct DisplayConfig {
+        width: usize,
+        height: usize,
+        pause_len: Duration,
     }
-}
 
-fn clear() -> () {
-    print!("\x1B[2J\x1B[1;1H");
-}
+    let config = DisplayConfig {
+        width: 100,
+        height: 50,
+        pause_len: Duration::from_millis(20),
+    };
 
-fn pause(config: &DisplayConfig) -> () {
-    thread::sleep(config.pause_len);
-}
-
-fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) -> () {
+    // Copy map and place cursor icon
     let mut map_copy = map.clone();
-
     let cursor_x = map_copy.cursor.x;
     let cursor_y = map_copy.cursor.y;
+    map_copy.puzzle_map[cursor_y][cursor_x] = map.cursor.icon;
+
+    // --- Calculate display size ---
     let mut local_x_min = 0;
     let mut local_x_max = 0;
     let mut local_y_min = 0;
     let mut local_y_max = 0;
 
-    // Calculate display size
     // Width greater than row len
     if config.width >= *x_max {
         local_x_min = 0;
@@ -193,7 +183,7 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) 
         local_x_min = *x_max - config.width;
         local_x_max = *x_max;
     }
-    // Cursor safely inside x boundaries
+    // Cursor safely inside width boundaries
     else {
         local_x_min = cursor_x - (config.width / 2);
         local_x_max = cursor_x + (config.width / 2);
@@ -214,25 +204,26 @@ fn draw_screen(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) 
         local_y_min = *y_max - config.height;
         local_y_max = *y_max;
     }
-    // Cursor safely inside y boundaries
+    // Cursor safely inside height boundaries
     else {
         local_y_min = cursor_y - (config.height / 2);
         local_y_max = cursor_y + (config.height / 2);
     }
 
-    map_copy.puzzle_map[cursor_y][cursor_x] = map.cursor.symbol;
+    // --- Draw Screen ---
+    // Hacky clear screen
+    print!("\x1B[2J\x1B[1;1H");
+
+    // Draw map
     for row_vec in local_y_min..local_y_max {
         let row: String = map_copy.puzzle_map[row_vec][local_x_min..local_x_max]
             .iter()
             .collect();
         println!("{}", row);
     }
-}
 
-fn display(map: &Map, x_max: &usize, y_max: &usize, config: &DisplayConfig) -> () {
-    clear();
-    draw_screen(map, x_max, y_max, config);
-    pause(config);
+    // Sleep
+    thread::sleep(config.pause_len);
 }
 
 fn part_1(input: &str) -> usize {
@@ -240,11 +231,10 @@ fn part_1(input: &str) -> usize {
     let x_max = &m.puzzle_map[0].len();
     let y_max = &m.puzzle_map.len();
     let marker = 'x';
-    let config = DisplayConfig::new();
 
     let mut next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
     while next.in_bounds {
-        display(&m, &x_max, &y_max, &config);
+        draw_screen(&m, &x_max, &y_max);
         if m.puzzle_map[next.y][next.x] == '#' {
             next = Cursor::rotate_clockwise(&m.cursor);
             m.cursor = next;
@@ -255,7 +245,7 @@ fn part_1(input: &str) -> usize {
         next = Cursor::move_forward(&m.cursor, &x_max, &y_max);
     }
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
-    display(&m, &x_max, &y_max, &config);
+    draw_screen(&m, &x_max, &y_max);
 
     total_marker(&m.puzzle_map, &marker)
 }
