@@ -53,24 +53,25 @@ fn solve(calibration: &Calibration) -> Option<usize> {
     todo!()
 }
 
-fn apply_add(calibration: &Calibration) -> Option<usize> {
+// Mess - make it work pls maybe enum with possible states?
+fn apply_add(total_check: &usize, values: &Vec<usize>) -> (Option<usize>, Vec<usize>) {
     let mut total = 0;
-    let mut values_clone = calibration.values.clone();
+    let mut values_clone = values.clone();
     while !values_clone.is_empty() {
         (total, values_clone) = add(&mut total, &mut values_clone);
     }
 
     // Lost cause IF adding all the numbers is greater than the total
-    if total > calibration.total {
-        return None;
+    if total > *total_check {
+        return (None, values.to_vec());
     }
     
     // If adding works
-    if total == calibration.total {
-        return Some(total);
+    if total == *total_check {
+        return (Some(total), values.to_vec());
     }
 
-    todo!("figure out what to consume to minimize clone")
+    todo!()
 }
 
 fn main() {
