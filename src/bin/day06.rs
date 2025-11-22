@@ -4,22 +4,22 @@ use std::{thread, time::Duration};
 struct Map {
     puzzle_map: Vec<Vec<char>>,
     cursor: Cursor,
-    x_max: usize,
-    y_max: usize,
+    _x_max: usize,
+    _y_max: usize,
 }
 
 impl Map {
     fn new(input: &str) -> Map {
         let puzzle_map: Vec<Vec<char>> = input.lines().map(|row| row.chars().collect()).collect();
         let cursor: Cursor = Cursor::find_start(&puzzle_map).unwrap();
-        let x_max = puzzle_map[0].len();
-        let y_max = puzzle_map.len();
+        let _x_max = puzzle_map[0].len();
+        let _y_max = puzzle_map.len();
 
         Map {
             puzzle_map,
             cursor,
-            x_max,
-            y_max,
+            _x_max,
+            _y_max,
         }
     }
 
@@ -74,7 +74,7 @@ impl Cursor {
         None
     }
 
-    fn move_forward(&mut self, x_max: &usize, y_max: &usize) -> () {
+    fn move_forward(&mut self) -> () {
         match self.direction {
             Direction::North => self.y = self.y.saturating_sub(1),
             Direction::South => self.y += 1,
@@ -159,51 +159,51 @@ fn draw_screen(map: &Map) -> () {
     map_copy.puzzle_map[cursor_y][cursor_x] = map.cursor.icon;
 
     // --- Calculate display size ---
-    let mut local_x_min = 0;
-    let mut local_x_max = 0;
-    let mut local_y_min = 0;
-    let mut local_y_max = 0;
+    let mut _local_x_min = 0;
+    let mut _local_x_max = 0;
+    let mut _local_y_min = 0;
+    let mut _local_y_max = 0;
 
     // Width greater than row len
-    if config.width >= map_copy.x_max {
-        local_x_min = 0;
-        local_x_max = map_copy.x_max;
+    if config.width >= map_copy._x_max {
+        _local_x_min = 0;
+        _local_x_max = map_copy._x_max;
     }
     // Cursor too close to west border
     else if cursor_x <= config.width / 2 {
-        local_x_min = 0;
-        local_x_max = config.width;
+        _local_x_min = 0;
+        _local_x_max = config.width;
     }
     // Cursor too close to east border
-    else if cursor_x + (config.width / 2) >= map_copy.x_max {
-        local_x_min = map_copy.x_max - config.width;
-        local_x_max = map_copy.x_max;
+    else if cursor_x + (config.width / 2) >= map_copy._x_max {
+        _local_x_min = map_copy._x_max - config.width;
+        _local_x_max = map_copy._x_max;
     }
     // Cursor safely inside width boundaries
     else {
-        local_x_min = cursor_x - (config.width / 2);
-        local_x_max = cursor_x + (config.width / 2);
+        _local_x_min = cursor_x - (config.width / 2);
+        _local_x_max = cursor_x + (config.width / 2);
     }
 
     // Height greater than col len
-    if config.height >= map_copy.y_max {
-        local_y_min = 0;
-        local_y_max = map_copy.y_max;
+    if config.height >= map_copy._y_max {
+        _local_y_min = 0;
+        _local_y_max = map_copy._y_max;
     }
     // Cursor too close to north border
     else if cursor_y <= config.height / 2 {
-        local_y_min = 0;
-        local_y_max = config.height;
+        _local_y_min = 0;
+        _local_y_max = config.height;
     }
     // Cursor too close to south border
-    else if cursor_y + (config.height / 2) >= map_copy.y_max {
-        local_y_min = map_copy.y_max - config.height;
-        local_y_max = map_copy.y_max;
+    else if cursor_y + (config.height / 2) >= map_copy._y_max {
+        _local_y_min = map_copy._y_max - config.height;
+        _local_y_max = map_copy._y_max;
     }
     // Cursor safely inside height boundaries
     else {
-        local_y_min = cursor_y - (config.height / 2);
-        local_y_max = cursor_y + (config.height / 2);
+        _local_y_min = cursor_y - (config.height / 2);
+        _local_y_max = cursor_y + (config.height / 2);
     }
 
     // --- Draw Screen ---
@@ -211,8 +211,8 @@ fn draw_screen(map: &Map) -> () {
     print!("\x1B[2J\x1B[1;1H");
 
     // Draw map
-    for row_vec in local_y_min..local_y_max {
-        let row: String = map_copy.puzzle_map[row_vec][local_x_min..local_x_max]
+    for row_vec in _local_y_min.._local_y_max {
+        let row: String = map_copy.puzzle_map[row_vec][_local_x_min.._local_x_max]
             .iter()
             .collect();
         println!("{}", row);
@@ -232,7 +232,7 @@ fn part_1(input: &str) -> usize {
             m.cursor.rotate_clockwise();
         }
         m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
-        m.cursor.move_forward(&m.x_max, &m.y_max);
+        m.cursor.move_forward();
     }
     // Fix off by 1 error
     m.puzzle_map[m.cursor.y][m.cursor.x] = marker;
