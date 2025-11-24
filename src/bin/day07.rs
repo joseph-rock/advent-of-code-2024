@@ -44,34 +44,16 @@ fn multiply(total: &mut usize, values: &mut Vec<usize>) -> (usize, Vec<usize>) {
     (*total * value, values.to_vec())
 }
 
-fn solve(calibration: &Calibration) -> Option<usize> {
-    // sort list
-    let values_clone = calibration.values.clone().sort();
-    // add
-    //  if smaller, multiply first 2 and add again
+fn apply(total_check: &usize, values: &Vec<usize>) -> usize {
+    let mut list_copy = values.clone();
+
+    //  if smaller, create a sliding window 2+i 0..max
+    //  - multiply first 2 num
+    //  - repeat if failed til all multiplied
+    //  - can exit early if initial first 2 multiplication is > checked total
     //  if larger, return none
-    todo!()
-}
 
-// Mess - make it work pls maybe enum with possible states?
-fn apply_add(total_check: &usize, values: &Vec<usize>) -> (Option<usize>, Vec<usize>) {
-    let mut total = 0;
-    let mut values_clone = values.clone();
-    while !values_clone.is_empty() {
-        (total, values_clone) = add(&mut total, &mut values_clone);
-    }
-
-    // Lost cause IF adding all the numbers is greater than the total
-    if total > *total_check {
-        return (None, values.to_vec());
-    }
-    
-    // If adding works
-    if total == *total_check {
-        return (Some(total), values.to_vec());
-    }
-
-    todo!()
+    0
 }
 
 fn main() {
